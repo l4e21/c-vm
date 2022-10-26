@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "util.h"
-#include "lex.h"
 #include "parser.h"
-#include "vm.h"
+#include "interp.h"
 
 int main(int argc, char** argv) {
   if (argc < 3) {
@@ -18,13 +16,13 @@ int main(int argc, char** argv) {
 
     TokenList TList = {0};
 
-    // Lex
+    // Parse
     ParserStatus parserStat = parser_start(&TList, source);
     
     if (parserStat == SYNTAX_ERR) {
       return 1;
-    }  
-
+    }
+    
     // Run
     ProgramStatus progStat = run_program(&TList);
     
