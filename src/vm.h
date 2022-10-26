@@ -18,7 +18,7 @@ typedef enum __ProgramStatus ProgramStatus;
 
 int registerName(int reg);
 
-ProgramStatus run_program(int* program);
+ProgramStatus run_program(TokenList* program);
 
 void push();
 void add();

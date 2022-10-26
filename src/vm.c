@@ -5,31 +5,31 @@
 
 /* char* registerName(int reg) { */
 /*   if (reg == A) { */
-/*     return 'A'; */
+/*     return "A"; */
 /*   } */
 /*   if (reg == B) { */
-/*     return 'B'; */
+/*     return "B"; */
 /*   } */
 /*   if (reg == C) { */
-/*     return 'C'; */
+/*     return "C"; */
 /*   } */
 /*   if (reg == D) { */
-/*     return 'D'; */
+/*     return "D"; */
 /*   } */
 /*   if (reg == E) { */
-/*     return 'E'; */
+/*     return "E"; */
 /*   } */
 /*   if (reg == F) { */
-/*     return 'F'; */
+/*     return "F"; */
 /*   } */
 /*   if (reg == IP) { */
-/*     return 'I'; */
+/*     return "IP"; */
 /*   } */
 /*   if (reg == SP) { */
-/*     return 'S'; */
+/*     return "SP"; */
 /*   } */
 
-ProgramStatus run_program(int* program) {
+ProgramStatus run_program(TokenList* program) {
   int r[NUM_OF_REGISTERS] = {0};
   int ip = r[IP];
   int sp = r[SP];
@@ -39,22 +39,22 @@ ProgramStatus run_program(int* program) {
   
   while(running) {
 
-    if (program[ip] == PUSH) {
-      stack[sp++] = program[++ip];
+    if (program->data[ip]->data == PUSH) {
+      stack[sp++] = program->data[++ip]->data;
     }
-    else if (program[ip] == PEEK) {
+    else if (program->data[ip]->data == PEEK) {
       printf("Top of stack: %d\n", stack[sp-1]);
     }
-    else if (program[ip] == ADD) {
+    else if (program->data[ip]->data == ADD) {
       int res = stack[--sp] + stack[--sp];
       stack[sp] = res;
       sp++;
     }
-    else if (program[ip] == HLT) {
+    else if (program->data[ip]->data == HLT) {
       return PROG_SUCCESS;
     }
     else {
-      printf("Unrecognised instruction %i\n", program[ip]);
+      printf("Unrecognised instruction %i\n", program->data[ip]->data);
       return RUNTIME_ERR;
     }
     

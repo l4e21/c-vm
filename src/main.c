@@ -23,27 +23,16 @@ int main(int argc, char** argv) {
     
     if (parserStat == SYNTAX_ERR) {
       return 1;
-    }
-
-
-    // Compile
-    int program[TList.ptr];
-
-    for (int i=0; i<TList.ptr; i++) {
-      Token* tok = get_token(&TList, i);
-      program[i] = tok->data;
-    }
-  
+    }  
 
     // Run
-    ProgramStatus progStat = run_program(program);
+    ProgramStatus progStat = run_program(&TList);
     
-  /*   if (progStat == RUNTIME_ERR) { */
-  /*     return 1; */
-  /*   } */
+    destroy_tokens(&TList);
+    free(source);
 
-  /*   destroy_tokens(&TList); */
-  /*   free(source); */
+    return progStat;
+
   }
 
   return 0;
