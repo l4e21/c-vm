@@ -31,37 +31,37 @@ char* read_ascii_file(const char* path) {
   return buf;
 }
 
-Token* create_token(int data, int type, int line) {
-  Token* tok = (Token* ) malloc(sizeof(Token));
-  tok->data = data;
-  tok->type = type;
-  tok->line = line;
+Token create_token(int data, int type, int line) {
+  Token tok;
+  tok.data = data;
+  tok.type = type;
+  tok.line = line;
 
   return tok;
 }
 
-void destroy_token(Token* token) {
-  free(token);
+void destroy_token(Token token) {
+  /* free(token); */
 }
 
-void append_token(TokenList* list, Token* token) {
+void append_token(TokenList* list, Token token) {
   if (list->ptr >= list->size) {
     list->size += list->size + 1;
-    list->data = (Token**) realloc(list->data, sizeof(Token**) * list->size);
+    list->data = (Token*) realloc(list->data, sizeof(Token) * list->size);
   }
   
   list->data[list->ptr++] = token;
   return;
 }
 
-Token* get_token(TokenList* list, int index) {
+Token get_token(TokenList* list, int index) {
   return list->data[index];
 }
 
 void destroy_tokens(TokenList* list) {
-  for (int i=0; i<list->ptr;i++) {
-    free(list->data[i]);
-  }
+  /* for (int i=0; i<list->ptr;i++) { */
+  /*   free(list->data[i]); */
+  /* } */
 
   free(list->data);
 }
@@ -129,44 +129,24 @@ int get_register(char* lex) {
   }
 }
 
-/* char* get_sym(char* lex) { */
-/*   int i = 1; */
-/*   char* sym; */
-/*   int symPtr = 0; */
-
-/*   /\* printf("%s\n", lex); *\/ */
-
-  
-/*   for (i; i < sizeof(lex) && lex[i] != '\0'; i++) { */
-/*     /\* printf("%c\n", lex[i]); *\/ */
-/*     /\* printf("%c\n", sym[symPtr]); *\/ */
-/*     sym[symPtr++] = lex[i]; */
-    
-/*   } */
-/*   sym[symPtr] = '\0'; */
-
-/*   /\* printf("%s\n", sym); *\/ */
-  
-/*   return sym; */
-/* } */
-
 
 Label create_label(int progPtr, char* name) {
   Label lbl;
+  
   lbl.progPtr = progPtr;
   lbl.name = name;
 
   return lbl;
 }
 
-void destroy_label(Label* label) {
-  free(label);
+void destroy_label(Label label) {
+  /* free(label); */
 }
 
 void append_label(LbList* list, Label label) {
-  if (list->ptr >= list->size-1) {
+  if (list->ptr >= list->size) {
     list->size += list->size + 1;
-    list->data = (Label*) realloc(list->data, sizeof(Label*) * list->size);
+    list->data = (Label*) realloc(list->data, sizeof(Label) * list->size);
   }
   
   list->data[list->ptr++] = label;
@@ -190,9 +170,9 @@ int find_label_by_name(LbList* list, char* name) {
 }
 
 void destroy_labels(LbList* list) {
-  for (int i=0; i<list->ptr;i++) {
-    /* free(&list->data[i]); */
-  }
+  /* for (int i=0; i<list->ptr;i++) { */
+  /*   /\* free(&list->data[i]); *\/ */
+  /* } */
 
   free(list->data);
 }
@@ -206,6 +186,8 @@ ParserStatus parser_start(TokenList* list, LbList* labels, char* source) {
   int line = 1;
   Label lbl;
   int commandNum = 0;
+  /* list->size += 1; */
+  /* labels->size += 1; */
   
   while (source[i] != '\0') {
 
@@ -219,12 +201,15 @@ ParserStatus parser_start(TokenList* list, LbList* labels, char* source) {
     // Dispatch
     int numRepr = atoi(lex);
 
-    printf("%s\n", lex);
+    /* printf("%s\n", lex); */
+    /* printf("Label being parsed: %s\n", get_label(labels, 0)); */
+    
 
     if ((numRepr != 0) || !strcmp(lex, "0")) {
 
       printf("Number. %s %i\n", lex, line);
-      Token* tok = create_token(numRepr, NUMBER, line);
+      Token tok;
+      tok = create_token(numRepr, NUMBER, line);
       append_token(list, tok);
     }
 
@@ -238,11 +223,14 @@ ParserStatus parser_start(TokenList* list, LbList* labels, char* source) {
         lbl = create_label(commandNum, lex);
         append_label(labels, lbl);
         
-        Token* tok = create_token(labels->ptr-1, SYM, line);
+        Token tok;
+        tok = create_token(labels->ptr-1, SYM, line);
         append_token(list, tok);
       }
       else {
-        Token* tok = create_token(labelPtr, SYM, line);
+        Token tok;
+        tok = create_token(labelPtr, SYM, line);
+        append_token(list, tok);
       }
     }
 
@@ -255,7 +243,8 @@ ParserStatus parser_start(TokenList* list, LbList* labels, char* source) {
         return SYNTAX_ERR;
       }
       
-      Token* tok = create_token(reg, REG, line);
+      Token tok;
+      tok = create_token(reg, REG, line);
       append_token(list, tok);
     }
 
@@ -268,7 +257,8 @@ ParserStatus parser_start(TokenList* list, LbList* labels, char* source) {
         return SYNTAX_ERR;
       }
 
-      Token* tok = create_token(instr, INST, line);
+      Token tok;
+      tok = create_token(instr, INST, line);
       append_token(list, tok);
       
       if (instr == OP_HLT) {

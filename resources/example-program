@@ -1,3 +1,4 @@
+_start
 OP_PUSH 5
 OP_PUSH 6
 OP_PUSH 11

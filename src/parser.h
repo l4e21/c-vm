@@ -29,19 +29,19 @@ struct __TOKEN {
 
 typedef struct __TOKEN Token;
 
-Token* create_token(int data, int type, int line);
-void destroy_token(Token* token);
+Token create_token(int data, int type, int line);
+void destroy_token(Token token);
 
 struct __TOKENLIST {
-  Token** data;
+  Token* data;
   int ptr;
   int size;
 };
 
 typedef struct __TOKENLIST TokenList;
 
-void append_token(TokenList* list, Token* token);
-Token* get_token(TokenList* list, int index);
+void append_token(TokenList* list, Token token);
+Token get_token(TokenList* list, int index);
 void destroy_tokens(TokenList* list);
 
 
@@ -53,7 +53,7 @@ struct __Label {
 typedef struct __Label Label;
 
 Label create_label(int progPtr, char* name);
-void destroy_label(Label* label);
+void destroy_label(Label label);
 
 struct __LBLIST {
   Label* data;

@@ -16,7 +16,8 @@ int main(int argc, char** argv) {
 
     TokenList TList = {0};
     LbList LList = {0};
-    LList.size = 1;
+    /* LList.size = 1; */
+    /* TList.size = 1; */
     
     // Parse
     ParserStatus parserStat = parser_start(&TList, &LList, source);
