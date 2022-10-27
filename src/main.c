@@ -15,18 +15,23 @@ int main(int argc, char** argv) {
     char* source = read_ascii_file(argv[2]);
 
     TokenList TList = {0};
-
-    // Parse
-    ParserStatus parserStat = parser_start(&TList, source);
+    LbList LList = {0};
+    LList.size = 1;
     
+    // Parse
+    ParserStatus parserStat = parser_start(&TList, &LList, source);
+
+      
     if (parserStat == SYNTAX_ERR) {
       return 1;
     }
     
     // Run
-    ProgramStatus progStat = run_program(&TList);
+    printf("\nRUNNING\n\n");
+    ProgramStatus progStat = run_program(&TList, &LList);
     
     destroy_tokens(&TList);
+    destroy_labels(&LList);
     free(source);
 
     return progStat;

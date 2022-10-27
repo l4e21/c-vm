@@ -14,6 +14,8 @@ typedef enum __ProgramStatus ProgramStatus;
 
 char* registerName(int reg);
 
-ProgramStatus run_program(TokenList* program);
+void print_program(TokenList* program);
+
+ProgramStatus run_program(TokenList* program, LbList* labels);
 
 #endif

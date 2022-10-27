@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,6 +70,9 @@ int get_instruction(char* lex) {
   if (strcmp(lex, "OP_PUSH") == 0) {
     return OP_PUSH;
   } 
+  /* if (strcmp(lex, "OP_LBL") == 0) { */
+  /*   return OP_LBL; */
+  /* }  */
   if (strcmp(lex, "OP_PEEK") == 0) {
     return OP_PEEK;
   } 
@@ -83,6 +87,9 @@ int get_instruction(char* lex) {
   } 
   if (strcmp(lex, "OP_MOV") == 0) {
     return OP_MOV;
+  } 
+  if (strcmp(lex, "OP_JMP") == 0) {
+    return OP_JMP;
   } 
   if (strcmp(lex, "OP_PRINT") == 0) {
     return OP_PRINT;
@@ -122,14 +129,85 @@ int get_register(char* lex) {
   }
 }
 
-ParserStatus parser_start(TokenList* list, char* source) {
+/* char* get_sym(char* lex) { */
+/*   int i = 1; */
+/*   char* sym; */
+/*   int symPtr = 0; */
+
+/*   /\* printf("%s\n", lex); *\/ */
+
+  
+/*   for (i; i < sizeof(lex) && lex[i] != '\0'; i++) { */
+/*     /\* printf("%c\n", lex[i]); *\/ */
+/*     /\* printf("%c\n", sym[symPtr]); *\/ */
+/*     sym[symPtr++] = lex[i]; */
+    
+/*   } */
+/*   sym[symPtr] = '\0'; */
+
+/*   /\* printf("%s\n", sym); *\/ */
+  
+/*   return sym; */
+/* } */
+
+
+Label create_label(int progPtr, char* name) {
+  Label lbl;
+  lbl.progPtr = progPtr;
+  lbl.name = name;
+
+  return lbl;
+}
+
+void destroy_label(Label* label) {
+  free(label);
+}
+
+void append_label(LbList* list, Label label) {
+  if (list->ptr >= list->size-1) {
+    list->size += list->size + 1;
+    list->data = (Label*) realloc(list->data, sizeof(Label*) * list->size);
+  }
+  
+  list->data[list->ptr++] = label;
+  return;
+}
+
+Label get_label(LbList* list, int index) {
+  return list->data[index];
+}
+
+int find_label_by_name(LbList* list, char* name) {
+  int i;
+
+  for (i=0; i<list->ptr; i++) {
+    Label lbl = list->data[i];
+    if (strcmp(lbl.name, name) == 0) {
+      return i;
+    }
+  };
+  return -1;
+}
+
+void destroy_labels(LbList* list) {
+  for (int i=0; i<list->ptr;i++) {
+    /* free(&list->data[i]); */
+  }
+
+  free(list->data);
+}
+
+
+
+ParserStatus parser_start(TokenList* list, LbList* labels, char* source) {
   char lex[256];  
   int i = 0;
   int lexc = 0;
   int line = 1;
+  Label lbl;
+  int commandNum = 0;
   
   while (source[i] != '\0') {
-    memset(lex, 0, 256);
 
     // Word -> Lex 
     while(source[i] != ' ' && source[i] != '\n' && source[i] != '\0') {
@@ -138,22 +216,42 @@ ParserStatus parser_start(TokenList* list, char* source) {
     
     lex[lexc] = '\0';
 
-
     // Dispatch
     int numRepr = atoi(lex);
 
+    printf("%s\n", lex);
+
     if ((numRepr != 0) || !strcmp(lex, "0")) {
-      printf("Number. %s\n", lex);
+
+      printf("Number. %s %i\n", lex, line);
       Token* tok = create_token(numRepr, NUMBER, line);
       append_token(list, tok);
     }
 
+    else if (lex[0] == '_') {
+      printf("Label. %s %i\n", lex, line);
+      
+      int labelPtr = find_label_by_name(labels, lex);
+
+      if (labelPtr == -1) {
+        Label lbl;
+        lbl = create_label(commandNum, lex);
+        append_label(labels, lbl);
+        
+        Token* tok = create_token(labels->ptr-1, SYM, line);
+        append_token(list, tok);
+      }
+      else {
+        Token* tok = create_token(labelPtr, SYM, line);
+      }
+    }
+
     else if (lex[0] == '%') {
-      printf("Register. %s\n", lex);
+      printf("Register. %s %i\n", lex, line);
       int reg = get_register(lex);
 
       if (reg == -1) {
-        printf("Syntax Error: Unrecognised Register %s\n, line %i\n", reg, line);
+        printf("Syntax Error: Unrecognised Register %s\n, line %i\n", lex, line);
         return SYNTAX_ERR;
       }
       
@@ -162,7 +260,7 @@ ParserStatus parser_start(TokenList* list, char* source) {
     }
 
     else {
-      printf("Instruction. %s\n", lex);
+      printf("Instruction. %s %i\n", lex, line);
       int instr = get_instruction(lex);
 
       if (instr == -1) {
@@ -174,6 +272,7 @@ ParserStatus parser_start(TokenList* list, char* source) {
       append_token(list, tok);
       
       if (instr == OP_HLT) {
+        printf("Number of commands: %i\n", commandNum);
         return SUCCESS;
       }
     }
@@ -185,9 +284,11 @@ ParserStatus parser_start(TokenList* list, char* source) {
 
     // Reset ready
     i++;
+    commandNum++;
     lexc = 0;
-
   }
+
+  printf("Number of commands: %i\n", commandNum);
   return SUCCESS;
 
 };

@@ -32,7 +32,21 @@ char* registerName(int reg) {
   return "0";
 }
 
-ProgramStatus run_program(TokenList* program) {
+/* void print_program(TokenList* program) { */
+/*   int i = 0; */
+/*   int running = 1; */
+/*   while (running) { */
+/*     Token* currentTok = program->data[i]; */
+/*     printf("%i\n", currentTok->data); */
+
+/*     if (currentTok->data == OP_HLT) { */
+/*       running = 0; */
+/*     } */
+/*     i++; */
+/*   } */
+/* } */
+
+ProgramStatus run_program(TokenList* program, LbList* labels) {
   int r[NUM_OF_REGISTERS] = {0};
   int ip = r[IP];
   int sp = r[SP];
@@ -42,8 +56,15 @@ ProgramStatus run_program(TokenList* program) {
   
   while(running) {
     Token* currentTok = program->data[ip];
+    /* printf("%i\n", ip); */
+    /* printf("%i\n", currentTok->type); */
+
+    if (currentTok->type == SYM) {
+      /* printf("label %i\n", find_label_by_name(labels, "_start")); */
+      // Pass
+    }
     
-    if (currentTok->data == OP_PUSH) {
+    else if (currentTok->data == OP_PUSH) {
       Token* to = program->data[++ip];
 
       if (to->type == NUMBER) {
@@ -92,10 +113,34 @@ ProgramStatus run_program(TokenList* program) {
       else if (to_print->type == REG) {
         printf("%s: %i\n", registerName(to_print->data), r[to_print->data]);
       }
+      else if (to_print->type == SYM) {
+        printf("%s: %i\n", get_label(labels, to_print->data).name);
+      }
       else {
         printf("Runtime error: Type can't be printed: %i\n", to_print->type);
       }
     }
+
+
+    else if (currentTok->data == OP_JMP) {
+      Token* to_jmp = program->data[++ip];
+            
+      if (to_jmp->type == NUMBER) {
+        ip = to_jmp->data;
+      }
+
+      else if (to_jmp->type == SYM) {
+        Label label = get_label(labels, to_jmp->data);
+        printf("Label: %s\n", label.name);
+        ip = 0;
+        // TODO
+      }
+      
+      else {
+        printf("Runtime error: Can't access label: %i, line %i, type %i\n", to_jmp->type, to_jmp->line, to_jmp->type);
+      }
+    }
+    
     else {
       printf("Runtime error: Unrecognised instruction %i\n", program->data[ip]->data);
       return RUNTIME_ERR;
