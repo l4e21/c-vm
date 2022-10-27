@@ -117,7 +117,6 @@ ProgramStatus run_program(TokenList* program, LbList* labels) {
 
       else if (to_jmp.type == SYM) {
         Label label = get_label(labels, to_jmp.data);
-        printf("Label: %s\n", label.name);
         ip = label.progPtr+1;
         // TODO
       }

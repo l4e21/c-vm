@@ -64,6 +64,8 @@ void destroy_tokens(TokenList* list) {
   /* } */
 
   free(list->data);
+  list->size = 0;
+  list->ptr = 0;
 }
 
 int get_instruction(char* lex) {
@@ -134,7 +136,7 @@ Label create_label(int progPtr, char* name) {
   Label lbl;
   
   lbl.progPtr = progPtr;
-  lbl.name = name;
+  lbl.name = strdup(name);
 
   return lbl;
 }
@@ -170,11 +172,13 @@ int find_label_by_name(LbList* list, char* name) {
 }
 
 void destroy_labels(LbList* list) {
-  /* for (int i=0; i<list->ptr;i++) { */
-  /*   /\* free(&list->data[i]); *\/ */
-  /* } */
+  for (int i=0; i<list->ptr;i++) {
+    free(list->data[i].name);
+  }
 
   free(list->data);
+  list->size = 0;
+  list-> ptr = 0;
 }
 
 
