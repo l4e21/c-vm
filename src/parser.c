@@ -1,72 +1,9 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "parser.h"
+#include "token.h"
 
-char* read_ascii_file(const char* path) {
-  FILE* fp = fopen(path, "r");
-
-  if (!fp) {
-    printf("Could not open %s", path);
-    return NULL;
-  }
-
-  // Get file size
-  fseek(fp, 0, SEEK_END);
-  int size = ftell(fp);
-  fseek(fp, 0, SEEK_SET);
-
-  // Make a buffer
-  char* buf = (char*) malloc(sizeof(char) * (size));
-
-  if (!buf) {
-    printf("Could not allocate buffer for file %s\n", path);
-    return NULL;
-  }
-  
-  fread(buf, 1, size, fp);
-  buf[size] = '\0';
-
-  return buf;
-}
-
-Token create_token(int data, int type, int line) {
-  Token tok;
-  tok.data = data;
-  tok.type = type;
-  tok.line = line;
-
-  return tok;
-}
-
-void destroy_token(Token token) {
-  /* free(token); */
-}
-
-void append_token(TokenList* list, Token token) {
-  if (list->ptr >= list->size) {
-    list->size += list->size + 1;
-    list->data = (Token*) realloc(list->data, sizeof(Token) * list->size);
-  }
-  
-  list->data[list->ptr++] = token;
-  return;
-}
-
-Token get_token(TokenList* list, int index) {
-  return list->data[index];
-}
-
-void destroy_tokens(TokenList* list) {
-  /* for (int i=0; i<list->ptr;i++) { */
-  /*   free(list->data[i]); */
-  /* } */
-
-  free(list->data);
-  list->size = 0;
-  list->ptr = 0;
-}
 
 int get_instruction(char* lex) {
   if (strcmp(lex, "OP_PUSH") == 0) {
@@ -101,6 +38,8 @@ int get_instruction(char* lex) {
   }
 }
 
+
+
 int get_register(char* lex) {
   if (strcmp(lex, "%A") == 0) {
     return A;
@@ -130,57 +69,6 @@ int get_register(char* lex) {
     return -1;
   }
 }
-
-
-Label create_label(int progPtr, char* name) {
-  Label lbl;
-  
-  lbl.progPtr = progPtr;
-  lbl.name = strdup(name);
-
-  return lbl;
-}
-
-void destroy_label(Label label) {
-  /* free(label); */
-}
-
-void append_label(LbList* list, Label label) {
-  if (list->ptr >= list->size) {
-    list->size += list->size + 1;
-    list->data = (Label*) realloc(list->data, sizeof(Label) * list->size);
-  }
-  
-  list->data[list->ptr++] = label;
-  return;
-}
-
-Label get_label(LbList* list, int index) {
-  return list->data[index];
-}
-
-int find_label_by_name(LbList* list, char* name) {
-  int i;
-
-  for (i=0; i<list->ptr; i++) {
-    Label lbl = list->data[i];
-    if (strcmp(lbl.name, name) == 0) {
-      return i;
-    }
-  };
-  return -1;
-}
-
-void destroy_labels(LbList* list) {
-  for (int i=0; i<list->ptr;i++) {
-    free(list->data[i].name);
-  }
-
-  free(list->data);
-  list->size = 0;
-  list-> ptr = 0;
-}
-
 
 
 ParserStatus parser_start(TokenList* list, LbList* labels, char* source) {
