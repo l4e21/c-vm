@@ -1,6 +1,9 @@
 #ifndef INTERP_H
 #define INTERP_H
 
+#include "token.h"
+#include "label.h"
+#include "trace.h"
 #include "parser.h"
 
 #define STACK_LENGTH 100
@@ -16,6 +19,6 @@ char* registerName(int reg);
 
 void print_program(TokenList* program);
 
-ProgramStatus run_program(TokenList* program, LbList* labels);
+ProgramStatus run_program(TokenList* program, LbList* labels, Ring* trace);
 
 #endif

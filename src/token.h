@@ -1,11 +1,18 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-char* read_ascii_file(const char* path);
-
 enum __TokenType {INST, NUMBER, REG, SYM, NUM_OF_TYPES};
 
 typedef enum __TokenType TokenType;
+
+// We also need
+// Jump if equal
+// Jump if greater
+// Jump if less
+// We can't jump forward currently
+// We need an entrypoint (could use _start ?)
+// Returns
+// Trace and call ring?
 
 enum __TokenInstruction {
   OP_PUSH,
@@ -16,6 +23,7 @@ enum __TokenInstruction {
   OP_ADD_STACK,
   OP_PEEK,
   OP_HLT,
+  OP_RET,
   NUM_OF_INSTRUCTIONS
 };
 

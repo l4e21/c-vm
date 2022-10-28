@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils.h"
 #include "parser.h"
 #include "token.h"
 
@@ -9,9 +10,9 @@ int get_instruction(char* lex) {
   if (strcmp(lex, "OP_PUSH") == 0) {
     return OP_PUSH;
   } 
-  /* if (strcmp(lex, "OP_LBL") == 0) { */
-  /*   return OP_LBL; */
-  /* }  */
+  if (strcmp(lex, "OP_RET") == 0) {
+    return OP_RET;
+  }
   if (strcmp(lex, "OP_PEEK") == 0) {
     return OP_PEEK;
   } 
@@ -82,95 +83,109 @@ ParserStatus parser_start(TokenList* list, LbList* labels, char* source) {
   /* labels->size += 1; */
   
   while (source[i] != '\0') {
-
-    // Word -> Lex 
-    while(source[i] != ' ' && source[i] != '\n' && source[i] != '\0') {
-      lex[lexc++] = source[i++];
-    }
-    
-    lex[lexc] = '\0';
-
-    // Dispatch
-    int numRepr = atoi(lex);
-
-    /* printf("%s\n", lex); */
-    /* printf("Label being parsed: %s\n", get_label(labels, 0)); */
-    
-
-    if ((numRepr != 0) || !strcmp(lex, "0")) {
-
-      printf("Number. %s %i\n", lex, line);
-      Token tok;
-      tok = create_token(numRepr, NUMBER, line);
-      append_token(list, tok);
+        // New line
+    if (source[i] == '\n') {
+      line++;
+      i++;
     }
 
-    else if (lex[0] == '_') {
-      printf("Label. %s %i\n", lex, line);
+    else if (source[i] == ' ') {
+      i++;
+    }
+    
+    else {
       
-      int labelPtr = find_label_by_name(labels, lex);
-
-      if (labelPtr == -1) {
-        Label lbl;
-        lbl = create_label(commandNum, lex);
-        append_label(labels, lbl);
+      // Word -> Lex
+      while(source[i] != ' ' && source[i] != '\n' && source[i] != '\0') {
+        lex[lexc++] = source[i++];
+      }
+      
+      lex[lexc] = '\0';
+      
+      // Dispatch
+      int numRepr = atoi(lex);
+      /* printf("%s\n", lex); */
+      /* printf("Label being parsed: %s\n", get_label(labels, 0)); */
+      
+      
+      if ((numRepr != 0) || !strcmp(lex, "0")) {
+        if (DEBUG) {
+          printf("Number. %s %i\n", lex, line);
+        }
+        Token tok;
+        tok = create_token(numRepr, NUMBER, line);
+        append_token(list, tok);
+      }
+      
+      else if (lex[0] == '_') {
+        if (DEBUG) {
+          printf("Label. %s %i\n", lex, line);
+        }
+        
+        int labelPtr = find_label_by_name(labels, lex);
+        
+        if (labelPtr == -1) {
+          Label lbl;
+          lbl = create_label(commandNum, lex);
+          append_label(labels, lbl);
+          
+          Token tok;
+          tok = create_token(labels->ptr-1, SYM, line);
+          append_token(list, tok);
+        }
+        else {
+          Token tok;
+          tok = create_token(labelPtr, SYM, line);
+        append_token(list, tok);
+        }
+      }
+      
+      else if (lex[0] == '%') {
+        if (DEBUG) {
+          printf("Register. %s %i\n", lex, line);
+        }
+        int reg = get_register(lex);
+        
+        if (reg == -1) {
+          printf("SYNTAX ERROR: Unrecognised Register %s\n, line %i\n", lex, line);
+        return SYNTAX_ERR;
+        }
         
         Token tok;
-        tok = create_token(labels->ptr-1, SYM, line);
+        tok = create_token(reg, REG, line);
         append_token(list, tok);
       }
+      
       else {
-        Token tok;
-        tok = create_token(labelPtr, SYM, line);
-        append_token(list, tok);
-      }
-    }
-
-    else if (lex[0] == '%') {
-      printf("Register. %s %i\n", lex, line);
-      int reg = get_register(lex);
-
-      if (reg == -1) {
-        printf("Syntax Error: Unrecognised Register %s\n, line %i\n", lex, line);
+        if (DEBUG) {
+          printf("Instruction. %s %i\n", lex, line);
+        }
+      int instr = get_instruction(lex);
+      
+      if (instr == -1) {
+        printf("SYNTAX ERROR: Unrecognised Instruction %s, line %i\n", lex, line);
         return SYNTAX_ERR;
       }
       
-      Token tok;
-      tok = create_token(reg, REG, line);
-      append_token(list, tok);
-    }
-
-    else {
-      printf("Instruction. %s %i\n", lex, line);
-      int instr = get_instruction(lex);
-
-      if (instr == -1) {
-        printf("Syntax Error: Unrecognised Instruction %s, line %i\n", lex, line);
-        return SYNTAX_ERR;
-      }
-
       Token tok;
       tok = create_token(instr, INST, line);
       append_token(list, tok);
       
       if (instr == OP_HLT) {
-        printf("Number of commands: %i\n", commandNum);
+        if (DEBUG) {
+          printf("Number of commands: %i\n", commandNum);
+        }
         return SUCCESS;
       }
-    }
-    
-    // New line
-    if (source[i] == '\n') {
-      line++;
-    }
+      };
+      // There was a command
+      commandNum++;
+      lexc = 0;
+    };    
+  };
 
-    // Reset ready
-    i++;
-    commandNum++;
-    lexc = 0;
+  if (DEBUG) {
+    printf("Number of commands: %i\n", commandNum);
   }
-
-  printf("Number of commands: %i\n", commandNum);
   return SUCCESS;
-
 };

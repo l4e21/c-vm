@@ -1,5 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "utils.h"
+#include "token.h"
+#include "label.h"
+#include "trace.h"
 #include "parser.h"
 #include "interp.h"
 
@@ -32,22 +36,41 @@ char* registerName(int reg) {
   return "0";
 }
 
-ProgramStatus run_program(TokenList* program, LbList* labels) {
+ProgramStatus run_program(TokenList* program, LbList* labels, Ring* tracebuf) {
   int r[NUM_OF_REGISTERS] = {0};
   int ip = r[IP];
   int sp = r[SP];
   int stack[STACK_LENGTH];
+  int inLabel;
 
   int running = 1;
+
+  int main = find_label_by_name(labels, "_main");
+  
+  if (main) {
+    ip = get_label(labels, main).progPtr + 1;
+    inLabel = main;
+  }
+  else {
+    // I don't know if this should be in runtime or parsing
+    printf("RUNTIME ERROR: No entrypoint found\n");
+    return RUNTIME_ERR;
+  }
   
   while(running) {
     Token currentTok = program->data[ip];
-    /* printf("%i\n", ip); */
-    /* printf("%i\n", currentTok->type); */
+
+    if (DEBUG) {
+    printf("TOKEN\nVal %i\nType %i\nLine %i\n", currentTok.data, currentTok.type, currentTok.line);
+      }
 
     if (currentTok.type == SYM) {
-      /* printf("label %i\n", find_label_by_name(labels, "_start")); */
       // Pass
+    }
+
+    else if (currentTok.type == NUMBER) {
+      printf("RUNTIME ERROR: Stray integer %i\n", currentTok.data);
+      return RUNTIME_ERR;
     }
     
     else if (currentTok.data == OP_PUSH) {
@@ -60,14 +83,21 @@ ProgramStatus run_program(TokenList* program, LbList* labels) {
         stack[++sp] = r[to.data];
       }
       else {
-        printf("Runtime error: Type can't be pushed: %i\n", to.type);
+        printf("RUNTIME ERROR: Type can't be pushed: %i\n", to.type);
         return RUNTIME_ERR;
       }
     }
     else if (currentTok.data == OP_POP) {
-      r[program->data[++ip].data] = stack[sp--];
+      Token to_pop = program->data[++ip];
+      if (to_pop.type == REG) {
+        r[to_pop.data] = stack[sp--];
+      }
+      else {
+        printf("RUNTIME ERROR: Type can't be popped: %i\n", to_pop.type);
+        return RUNTIME_ERR;
+      }
     }
-
+    
     else if (currentTok.data == OP_ADD_STACK) {
       int res = stack[sp] + stack[--sp];
       stack[sp] = res;
@@ -75,14 +105,15 @@ ProgramStatus run_program(TokenList* program, LbList* labels) {
     else if (currentTok.data == OP_MOV) {
       Token from = program->data[++ip];
       Token to = program->data[++ip];
-      if (from.type == NUMBER) {
+      if (from.type == NUMBER) {        
         r[to.data] = from.data;
       }
       else if (from.type == REG) {
         r[to.data] = r[from.data];
       }
       else {
-        printf("Runtime error: Type can't be mov'd: %i\n", to.type);
+        printf("RUNTIME ERROR: Type can't be mov'd: %i\n", to.type);
+        return RUNTIME_ERR;
       }
     }    
     else if (currentTok.data == OP_HLT) {
@@ -99,11 +130,9 @@ ProgramStatus run_program(TokenList* program, LbList* labels) {
       else if (to_print.type == REG) {
         printf("%s: %i\n", registerName(to_print.data), r[to_print.data]);
       }
-      else if (to_print.type == SYM) {
-        printf("%s: %i\n", get_label(labels, to_print.data).name);
-      }
       else {
-        printf("Runtime error: Type can't be printed: %i\n", to_print.type);
+        printf("RUNTIME ERROR: Type can't be printed: %i\n", to_print.type);
+        return RUNTIME_ERR;
       }
     }
 
@@ -111,23 +140,39 @@ ProgramStatus run_program(TokenList* program, LbList* labels) {
     else if (currentTok.data == OP_JMP) {
       Token to_jmp = program->data[++ip];
             
-      if (to_jmp.type == NUMBER) {
-        ip = to_jmp.data;
-      }
-
-      else if (to_jmp.type == SYM) {
+      if (to_jmp.type == SYM) {
         Label label = get_label(labels, to_jmp.data);
-        ip = label.progPtr+1;
+
+        Trace trace;
+        trace = create_trace(currentTok.line, label, ip, inLabel);
+        append_trace(tracebuf, trace);
+        ip = label.progPtr;
+        inLabel = to_jmp.data;
+
         // TODO
       }
       
       else {
-        printf("Runtime error: Can't jump to: %i, line %i, type %i\n", to_jmp.type, to_jmp.line, to_jmp.type);
+        printf("RUNTIME ERROR: Can't jump to: %i, line %i, type %i\n", to_jmp.type, to_jmp.line, to_jmp.type);
       }
+    }
+
+    else if (currentTok.data == OP_RET) {
+      Trace recentTrace = tracebuf->data[tracebuf->ringPtr-1];
+
+      Trace returnTrace;
+      returnTrace = create_trace(currentTok.line, get_label(labels, recentTrace.fromLabel), ip, inLabel);
+      append_trace(tracebuf, returnTrace);
+      ip = recentTrace.fromPtr;
+      inLabel = recentTrace.fromLabel;
+                           
+      // Adding a trace on return as well
+      /* Trace trace; */
+      /* trace = create_trace(currentTok, recent */
     }
     
     else {
-      printf("Runtime error: Unrecognised instruction %i\n", program->data[ip].data);
+      printf("RUNTIME ERROR: Unrecognised instruction %i\n", program->data[ip].data);
       return RUNTIME_ERR;
     }
     

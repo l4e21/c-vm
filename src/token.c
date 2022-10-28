@@ -1,34 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils.h"
 #include "token.h"
-
-char* read_ascii_file(const char* path) {
-  FILE* fp = fopen(path, "r");
-
-  if (!fp) {
-    printf("Could not open %s", path);
-    return NULL;
-  }
-
-  // Get file size
-  fseek(fp, 0, SEEK_END);
-  int size = ftell(fp);
-  fseek(fp, 0, SEEK_SET);
-
-  // Make a buffer
-  char* buf = (char*) malloc(sizeof(char) * (size));
-
-  if (!buf) {
-    printf("Could not allocate buffer for file %s\n", path);
-    return NULL;
-  }
-  
-  fread(buf, 1, size, fp);
-  buf[size] = '\0';
-
-  return buf;
-}
 
 Token create_token(int data, int type, int line) {
   Token tok;
@@ -45,8 +19,14 @@ void destroy_token(Token token) {
 
 void append_token(TokenList* list, Token token) {
   if (list->ptr >= list->size) {
+    if (DEBUG) {
+      printf("Reallocating size\n");
+    }
     list->size += list->size + 1;
     list->data = (Token*) realloc(list->data, sizeof(Token) * list->size);
+  }
+  if (DEBUG) {
+  printf("Appending %i %i %i\n", token.data, token.type, token.line);
   }
   
   list->data[list->ptr++] = token;
