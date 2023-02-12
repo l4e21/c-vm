@@ -144,7 +144,7 @@ ProgramStatus run_program(TokenList* program, LbList* labels, Ring* tracebuf) {
         Label label = get_label(labels, to_jmp.data);
 
         Trace trace;
-        trace = create_trace(currentTok.line, label, ip, inLabel);
+        trace = create_trace(currentTok.line, label.progPtr+1, label, ip, inLabel);
         append_trace(tracebuf, trace);
         ip = label.progPtr;
         inLabel = to_jmp.data;
@@ -161,7 +161,7 @@ ProgramStatus run_program(TokenList* program, LbList* labels, Ring* tracebuf) {
       Trace recentTrace = tracebuf->data[tracebuf->ringPtr-1];
 
       Trace returnTrace;
-      returnTrace = create_trace(currentTok.line, get_label(labels, recentTrace.fromLabel), ip, inLabel);
+      returnTrace = create_trace(currentTok.line, recentTrace.fromPtr-1, get_label(labels, recentTrace.fromLabel), ip, inLabel);
       append_trace(tracebuf, returnTrace);
       ip = recentTrace.fromPtr;
       inLabel = recentTrace.fromLabel;

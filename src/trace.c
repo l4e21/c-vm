@@ -5,9 +5,10 @@
 #include "label.h"
 #include "trace.h"
 
-Trace create_trace(int fromLine, Label toLabel, int fromPtr, int previousLabel) {
+Trace create_trace(int fromLine, int toLine, Label toLabel, int fromPtr, int previousLabel) {
   Trace trace;
   trace.fromLine = fromLine;
+  trace.toLine = toLine;
   trace.toName = strdup(toLabel.name);
   trace.fromPtr = fromPtr;
   trace.fromLabel = previousLabel;
@@ -33,7 +34,7 @@ void destroy_ring(Ring* buf) {
 
 void append_trace(Ring* buf, Trace trace) {
   if (DEBUG) {
-    printf("Appending trace %s, fromLine %i, fromPtr %i\n", trace.toName, trace.fromLine, trace.fromPtr);
+    printf("Appending trace %s, fromLine %i, toLine %i, fromPtr %i\n", trace.toName, trace.fromLine, trace.toLine, trace.fromPtr);
   }
   buf->data[buf->ringPtr++] = trace;
   if (buf->ringPtr > buf->size) {
@@ -51,7 +52,7 @@ void print_trace(Ring* buf) {
     }
     Trace trace = buf->data[buf->ringPtr];
     if (trace.fromLine) {
-      printf("CALL TRACEBACK %i: %s, from line %i\n", i, trace.toName, trace.fromLine);
+      printf("CALL TRACEBACK %i: %s, from line %i, to line %i\n", i, trace.toName, trace.fromLine, trace.toLine);
     }
   }
 }

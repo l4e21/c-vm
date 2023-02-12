@@ -6,7 +6,8 @@
 
 // Call trace
 struct __TRACE {
-  int fromLine;
+  int fromLine; 
+  int toLine;
   int fromPtr;
   char* toName;
   int fromLabel;
@@ -24,7 +25,7 @@ typedef struct __RING Ring;
 
 // On an error, we need to print the contents of the ring buffer
 
-Trace create_trace(int toLine, Label toLabel, int fromPtr, int previousLabel);
+Trace create_trace(int fromLine, int toLine, Label toLabel, int fromPtr, int previousLabel);
 void init_ring(Ring* buf, int size);
 void destroy_ring(Ring* buf);
 void append_trace(Ring* buf, Trace trace);
