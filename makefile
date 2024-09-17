@@ -1,4 +1,4 @@
-OUTPUT_FILE = src/main
+OUTPUT_FILE = main
 SRC_FILES = src/*.c
 CC = gcc
 

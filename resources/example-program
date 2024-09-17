@@ -9,5 +9,5 @@ _main
 OP_PUSH 1
 OP_PEEK
 OP_JMP _fn
-OP_PRINT
+OP_PRINT %A
 OP_HLT
